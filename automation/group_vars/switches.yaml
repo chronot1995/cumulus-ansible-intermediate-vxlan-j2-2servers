@@ -44,9 +44,9 @@ node:
           internal:
             peers:
       svi:
-        vlan11:
-          ip: 192.168.11.1/24
-          vlan: "11"
+        interface:
+          ip:
+          vlan:
           vrrp:
             mac:
             ip:
@@ -95,9 +95,9 @@ node:
           internal:
             peers:
       svi:
-        vlan22:
-          ip: 192.168.22.1/24
-          vlan: "22"
+        interface:
+          ip:
+          vlan:
           vrrp:
             mac:
             ip:

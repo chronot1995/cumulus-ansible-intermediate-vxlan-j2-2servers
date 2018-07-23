@@ -58,6 +58,7 @@ iface {{interface}}
 {% endif %}
 {% endfor %}
 
+{#
 {% for vlanint in node[inventory_hostname]["routing"]["svi"] -%}
 auto {{vlanint}}
 iface {{vlanint}}
@@ -65,7 +66,7 @@ iface {{vlanint}}
     vlan-id {{ node[inventory_hostname]["routing"]["svi"][vlanint]["vlan"] }}
     vlan-raw-device bridge
 {% endfor %}
-
+#}
 {% if global_vlan_list != [] %}
 auto bridge
 iface bridge
