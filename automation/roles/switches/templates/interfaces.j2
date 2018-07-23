@@ -55,15 +55,19 @@ iface {{interface}}
 {% endif %}
 {% endfor %}
 
-{#
-{% for vlanint in node[inventory_hostname]["routing"]["svi"] -%}
-auto {{vlanint}}
-iface {{vlanint}}
-    address {{ node[inventory_hostname]["routing"]["svi"][vlanint]["ip"] }}
-    vlan-id {{ node[inventory_hostname]["routing"]["svi"][vlanint]["vlan"] }}
-    vlan-raw-device bridge
+{%- for interface in node[inventory_hostname]["overlay"]["vxlan"] -%}
+auto {{interface}}
+iface {{interface}}
+  bridge-access {{ node[inventory_hostname]["overlay"]["vxlan"][interface]["vlan"] }}
+  bridge-arp-nd-suppress on
+  bridge-learning off
+  mstpctl-bpduguard yes
+  mstpctl-portbpdufilter yes
+  vxlan-id {{ node[inventory_hostname]["overlay"]["vxlan"][interface]["vlan"] }}
+  vxlan-local-tunnelip {{ node[inventory_hostname]["routing"]["lo"] }}
+{% do bridge_ports.append(interface) -%}
 {% endfor %}
-#}
+
 {% if global_vlan_list != [] %}
 auto bridge
 iface bridge

@@ -15,8 +15,8 @@ node:
     overlay:
       anycast-ip:
       vxlan:
-        vni:
-          vlan:
+        vni11:
+          vlan: "11"
     ports:
       - swp1
       - swp2
