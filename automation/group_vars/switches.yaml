@@ -79,7 +79,7 @@ node:
       swp10:
         mode: access
         vlans:
-          - "22"
+          - "11"
     routing:
       lo: 10.2.2.2/32
       ospf:
