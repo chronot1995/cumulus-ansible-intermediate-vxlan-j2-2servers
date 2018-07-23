@@ -2,7 +2,7 @@
 # Created by Topology-Converter v4.6.8
 #    Template Revision: v4.6.8
 #    https://github.com/cumulusnetworks/topology_converter
-#    using topology data from: int-ansible-training-bgp-j2-2servers.dot
+#    using topology data from: int-ansible-training-vxlan-j2-2servers.dot
 
 echo "################################################"
 echo "  Running Automatic Management Server Setup..."
@@ -15,8 +15,8 @@ echo " Detected vagrant user is: $username"
 #       KNOBS
 #######################
 
-REPOSITORY="https://github.com/CumulusNetworks/int-ansible-training-bgp-j2-2servers"
-REPONAME="int-ansible-training-bgp-j2-2servers"
+REPOSITORY="https://github.com/CumulusNetworks/int-ansible-training-vxlan-j2-2servers"
+REPONAME="int-ansible-training-vxlan-j2-2servers"
 
 #Install Automation Tools
 puppet=0
