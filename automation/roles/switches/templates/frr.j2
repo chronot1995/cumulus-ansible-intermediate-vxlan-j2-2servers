@@ -25,6 +25,11 @@ router bgp {{ node[inventory_hostname]["routing"]["bgp"]["asn"] }}
   redistribute connected
  exit-address-family
  !
+{% for interface in node[inventory_hostname]["routing"]["bgp"]["underlay"]["external"]["peers"] %}
+ address-family l2vpn evpn
+  neighbor {{interface}} activate
+{% endfor -%}
+  advertise-all-vni
 !
 {% endif -%}
 line vty
