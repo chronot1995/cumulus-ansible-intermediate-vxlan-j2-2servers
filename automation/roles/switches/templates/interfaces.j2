@@ -64,7 +64,7 @@ iface {{interface}}
   mstpctl-bpduguard yes
   mstpctl-portbpdufilter yes
   vxlan-id {{ node[inventory_hostname]["overlay"]["vxlan"][interface]["vlan"] }}
-  vxlan-local-tunnelip {{ node[inventory_hostname]["routing"]["lo"] }}
+  vxlan-local-tunnelip {{ node[inventory_hostname]["routing"]["lo"]|replace("/32", "") }}
 {% do bridge_ports.append(interface) -%}
 {% endfor %}
 
