@@ -128,6 +128,7 @@ One can also view the MAC addresses of the two switches within the EVPN instance
 
 ```
 cumulus@switch01:mgmt-vrf:~$ net show evpn mac vni 11
+
 Number of MACs (local and remote) known for this VNI: 2
 MAC               Type   Intf/Remote VTEP      VLAN
 44:38:39:00:00:05 local  swp10                 11
