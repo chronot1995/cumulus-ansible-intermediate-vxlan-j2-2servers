@@ -124,7 +124,7 @@ B>* 10.2.2.2/32 [20/0] via fe80::4638:39ff:fe00:4, swp1, 00:02:33
   *                    via fe80::4638:39ff:fe00:8, swp2, 00:02:33
 ```
 
-One can also view the MAC addresses of the two switches by running the following command:
+One can also view the MAC addresses of the two switches within the EVPN instance by running the following command:
 
 ```
 cumulus@switch01:mgmt-vrf:~$ net show evpn mac vni 11
