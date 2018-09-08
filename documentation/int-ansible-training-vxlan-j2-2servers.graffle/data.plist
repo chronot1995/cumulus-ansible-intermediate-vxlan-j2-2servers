@@ -753,7 +753,7 @@
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{611.64165751027986, 474.52791730893722}, {301, 30}}</string>
+					<string>{{608.14165751027986, 474.52791730893722}, {308, 30}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -803,7 +803,7 @@
 {\*\expandedcolortbl;;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc\partightenfactor0
 
-\f0\b\fs50 \cf0 server02 -192.168.11.222}</string>
+\f0\b\fs50 \cf0 server02 - 192.168.11.222}</string>
 						<key>VerticalPad</key>
 						<real>0.0</real>
 					</dict>
@@ -812,7 +812,7 @@
 				</dict>
 				<dict>
 					<key>Bounds</key>
-					<string>{{25.600082022747984, 474.52791730893722}, {298, 30}}</string>
+					<string>{{22.100082022747984, 474.52791730893722}, {305, 30}}</string>
 					<key>Class</key>
 					<string>ShapedGraphic</string>
 					<key>FitText</key>
@@ -862,7 +862,7 @@
 {\*\expandedcolortbl;;}
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\qc\partightenfactor0
 
-\f0\b\fs50 \cf0 server01 -192.168.11.111}</string>
+\f0\b\fs50 \cf0 server01 - 192.168.11.111}</string>
 						<key>VerticalPad</key>
 						<real>0.0</real>
 					</dict>
@@ -2600,7 +2600,7 @@
 		<key>Sidebar_Tab</key>
 		<integer>0</integer>
 		<key>VisibleRegion</key>
-		<string>{{-168.16666794568297, -115.66666738688954}, {1453.3333116769795, 1019.999984800816}}</string>
+		<string>{{-168.16666794568297, -115.66666738688939}, {1453.3333116769795, 1019.9999848008158}}</string>
 		<key>ZoomValues</key>
 		<array>
 			<array>
