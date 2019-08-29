@@ -12,6 +12,7 @@ echo "#################################"
 sudo su
 useradd cumulus -m -s /bin/bash
 echo "cumulus:CumulusLinux!" | chpasswd
+
 usermod -aG sudo cumulus
 echo "cumulus ALL=(ALL) NOPASSWD:ALL" | tee --append /etc/sudoers.d/20_cumulus
 
@@ -55,7 +56,6 @@ if [ "$?" == "0" ]; then
     echo -e "DEVICE=vagrant\nBOOTPROTO=dhcp\nONBOOT=yes" > /etc/sysconfig/network-scripts/ifcfg-vagrant
     echo -e "DEVICE=eth0\nBOOTPROTO=dhcp\nONBOOT=yes" > /etc/sysconfig/network-scripts/ifcfg-eth0
 fi
-
 
 echo "#################################"
 echo "   Finished"
