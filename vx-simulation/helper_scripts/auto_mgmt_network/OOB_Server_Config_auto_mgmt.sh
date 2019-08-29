@@ -21,7 +21,7 @@ REPONAME="cumulus-ansible-intermediate-vxlan-j2-2servers"
 #Install Automation Tools
 puppet=0
 ansible=1
-ansible_version=2.3.1.0
+ansible_version=2.8.4
 
 #######################
 
@@ -131,7 +131,7 @@ restrict ::1
 EOT
 
 echo " ### Creating cumulus user ###"
-useradd -m cumulus
+useradd -m cumulus -m -s /bin/bash
 
 echo " ### Setting Up DHCP ###"
 mv /home/$username/dhcpd.conf /etc/dhcp/dhcpd.conf
@@ -209,6 +209,12 @@ cat <<EOT >> /home/cumulus/.gitconfig
 [core]
     editor = vim
 EOT
+
+echo " ### Adding .bash_profile to auto login as cumulus user"
+echo "sudo su - cumulus" >> /home/vagrant/.bash_profile
+echo "exit" >> /home/vagrant/.bash_profile
+echo "### Adding .ssh_config to avoid HostKeyChecking"
+printf "Host * \n\t StrictHostKeyChecking no\n" >> /home/cumulus/.ssh/config
 
 echo "############################################"
 echo "      DONE!"
