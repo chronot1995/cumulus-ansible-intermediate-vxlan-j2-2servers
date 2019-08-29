@@ -2,14 +2,30 @@
 #    Template Revision: v4.7.0
 #    https://github.com/cumulusnetworks/topology_converter
 #    using topology data from: cumulus-ansible-intermediate-vxlan-j2-2servers.dot
-#    built with the following args: ./topology_converter.py -c cumulus-ansible-intermediate-vxlan-j2-2servers.dot
+#    built with the following args: ./topology_converter.py -c cumulus-ansible-intermediate-vxlan-j2-2servers.dot --provider=libvirt
 #
 #    NOTE: in order to use this Vagrantfile you will need:
 #       -Vagrant(v2.0.2+) installed: http://www.vagrantup.com/downloads
 #       -the "helper_scripts" directory that comes packaged with topology-converter.py
-#       -Virtualbox installed: https://www.virtualbox.org/wiki/Downloads
+#        -Libvirt Installed -- guide to come
+#       -Vagrant-Libvirt Plugin installed: $ vagrant plugin install vagrant-libvirt
+#       -Start with \"vagrant up --provider=libvirt --no-parallel\n")
 
+#  Libvirt Start Port: 8000
+#  Libvirt Port Gap: 1000
 
+#Set the default provider to libvirt in the case they forget --provider=libvirt or if someone destroys a machine it reverts to virtualbox
+ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'
+
+# Check required plugins
+REQUIRED_PLUGINS_LIBVIRT = %w(vagrant-libvirt)
+exit unless REQUIRED_PLUGINS_LIBVIRT.all? do |plugin|
+  Vagrant.has_plugin?(plugin) || (
+    puts "The #{plugin} plugin is required. Please install it with:"
+    puts "$ vagrant plugin install #{plugin}"
+    false
+  )
+end
 
 Vagrant.require_version ">= 2.2.5"
 
@@ -91,11 +107,15 @@ SCRIPT
 
 Vagrant.configure("2") do |config|
 
-  simid = 1567096256
+  wbid = 1
+  offset = wbid * 100
 
-  config.vm.provider "virtualbox" do |v|
-    v.gui=false
 
+  config.vm.provider :libvirt do |domain|
+    domain.management_network_address = "10.255.#{wbid}.0/24"
+    domain.management_network_name = "wbr#{wbid}"
+    # increase nic adapter count to be greater than 8 for all VMs.
+    domain.nic_adapter_count = 130
   end
 
 
@@ -107,9 +127,8 @@ Vagrant.configure("2") do |config|
     device.vm.hostname = "oob-mgmt-server"
     
     device.vm.box = "generic/ubuntu1804"
-    device.vm.provider "virtualbox" do |v|
-      v.name = "#{simid}_oob-mgmt-server"
-      v.customize ["modifyvm", :id, '--audiocontroller', 'AC97', '--audio', 'Null']
+
+    device.vm.provider :libvirt do |v|
       v.memory = 512
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
@@ -119,13 +138,17 @@ Vagrant.configure("2") do |config|
 
     # NETWORK INTERFACES
       # link for eth1 --> oob-mgmt-switch:swp1
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net6", auto_config: false , :mac => "44383900000a"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:0a",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9006 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8006 + offset }",
+            :libvirt__iface_name => 'eth1',
+            auto_config: false
 
-    device.vm.provider "virtualbox" do |vbox|
-      vbox.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
-      vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
-    end
+
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
@@ -179,9 +202,8 @@ end
     device.vm.hostname = "oob-mgmt-switch"
     
     device.vm.box = "CumulusCommunity/cumulus-vx"
-    device.vm.provider "virtualbox" do |v|
-      v.name = "#{simid}_oob-mgmt-switch"
-      v.customize ["modifyvm", :id, '--audiocontroller', 'AC97', '--audio', 'Null']
+
+    device.vm.provider :libvirt do |v|
       v.memory = 512
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
@@ -191,33 +213,67 @@ end
 
     # NETWORK INTERFACES
       # link for eth0 --> NOTHING:NOTHING
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net11", auto_config: false , :mac => "443839000013"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:13",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8011 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9011 + offset }",
+            :libvirt__iface_name => 'eth0',
+            auto_config: false
       # link for swp1 --> oob-mgmt-server:eth1
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net6", auto_config: false , :mac => "443839000009"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:09",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8006 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9006 + offset }",
+            :libvirt__iface_name => 'swp1',
+            auto_config: false
       # link for swp2 --> switch01:eth0
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net7", auto_config: false , :mac => "44383900000b"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:0b",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8007 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9007 + offset }",
+            :libvirt__iface_name => 'swp2',
+            auto_config: false
       # link for swp3 --> switch02:eth0
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net8", auto_config: false , :mac => "44383900000d"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:0d",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8008 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9008 + offset }",
+            :libvirt__iface_name => 'swp3',
+            auto_config: false
       # link for swp4 --> server01:eth0
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net9", auto_config: false , :mac => "44383900000f"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:0f",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8009 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9009 + offset }",
+            :libvirt__iface_name => 'swp4',
+            auto_config: false
       # link for swp5 --> server02:eth0
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net10", auto_config: false , :mac => "443839000011"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:11",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8010 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9010 + offset }",
+            :libvirt__iface_name => 'swp5',
+            auto_config: false
 
-    device.vm.provider "virtualbox" do |vbox|
-      vbox.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc4', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc5', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc6', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc7', 'allow-all']
-      vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
-    end
+
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
@@ -290,9 +346,8 @@ end
     
     device.vm.box = "CumulusCommunity/cumulus-vx"
     device.vm.box_version = "3.7.8"
-    device.vm.provider "virtualbox" do |v|
-      v.name = "#{simid}_switch01"
-      v.customize ["modifyvm", :id, '--audiocontroller', 'AC97', '--audio', 'Null']
+
+    device.vm.provider :libvirt do |v|
       v.memory = 768
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
@@ -302,25 +357,47 @@ end
 
     # NETWORK INTERFACES
       # link for eth0 --> oob-mgmt-switch:swp2
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net7", auto_config: false , :mac => "44383900000c"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:0c",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9007 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8007 + offset }",
+            :libvirt__iface_name => 'eth0',
+            auto_config: false
       # link for swp1 --> switch02:swp1
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net1", auto_config: false , :mac => "443839000001"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:01",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8001 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9001 + offset }",
+            :libvirt__iface_name => 'swp1',
+            auto_config: false
       # link for swp2 --> switch02:swp2
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net2", auto_config: false , :mac => "443839000003"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:03",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8002 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9002 + offset }",
+            :libvirt__iface_name => 'swp2',
+            auto_config: false
       # link for swp10 --> server01:eth1
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net3", auto_config: false , :mac => "443839000006"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:06",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9003 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8003 + offset }",
+            :libvirt__iface_name => 'swp10',
+            auto_config: false
 
-    device.vm.provider "virtualbox" do |vbox|
-      vbox.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc4', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc5', 'allow-all']
-      vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
-    end
+
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
@@ -382,9 +459,8 @@ end
     
     device.vm.box = "CumulusCommunity/cumulus-vx"
     device.vm.box_version = "3.7.8"
-    device.vm.provider "virtualbox" do |v|
-      v.name = "#{simid}_switch02"
-      v.customize ["modifyvm", :id, '--audiocontroller', 'AC97', '--audio', 'Null']
+
+    device.vm.provider :libvirt do |v|
       v.memory = 768
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
@@ -394,25 +470,47 @@ end
 
     # NETWORK INTERFACES
       # link for eth0 --> oob-mgmt-switch:swp3
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net8", auto_config: false , :mac => "44383900000e"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:0e",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9008 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8008 + offset }",
+            :libvirt__iface_name => 'eth0',
+            auto_config: false
       # link for swp1 --> switch01:swp1
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net1", auto_config: false , :mac => "443839000002"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:02",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9001 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8001 + offset }",
+            :libvirt__iface_name => 'swp1',
+            auto_config: false
       # link for swp2 --> switch01:swp2
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net2", auto_config: false , :mac => "443839000004"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:04",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9002 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8002 + offset }",
+            :libvirt__iface_name => 'swp2',
+            auto_config: false
       # link for swp10 --> server02:eth1
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net4", auto_config: false , :mac => "443839000008"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:08",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9004 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8004 + offset }",
+            :libvirt__iface_name => 'swp10',
+            auto_config: false
 
-    device.vm.provider "virtualbox" do |vbox|
-      vbox.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc4', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc5', 'allow-all']
-      vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
-    end
+
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
@@ -473,9 +571,9 @@ end
     device.vm.hostname = "server01"
     
     device.vm.box = "generic/ubuntu1804"
-    device.vm.provider "virtualbox" do |v|
-      v.name = "#{simid}_server01"
-      v.customize ["modifyvm", :id, '--audiocontroller', 'AC97', '--audio', 'Null']
+
+    device.vm.provider :libvirt do |v|
+      v.nic_model_type = 'e1000' 
       v.memory = 512
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
@@ -485,17 +583,27 @@ end
 
     # NETWORK INTERFACES
       # link for eth0 --> oob-mgmt-switch:swp4
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net9", auto_config: false , :mac => "443839000010"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:10",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9009 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8009 + offset }",
+            :libvirt__iface_name => 'eth0',
+            auto_config: false
       # link for eth1 --> switch01:swp10
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net3", auto_config: false , :mac => "443839000005"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:05",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8003 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9003 + offset }",
+            :libvirt__iface_name => 'eth1',
+            auto_config: false
 
-    device.vm.provider "virtualbox" do |vbox|
-      vbox.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
-      vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
-    end
+
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
@@ -547,9 +655,9 @@ end
     device.vm.hostname = "server02"
     
     device.vm.box = "generic/ubuntu1804"
-    device.vm.provider "virtualbox" do |v|
-      v.name = "#{simid}_server02"
-      v.customize ["modifyvm", :id, '--audiocontroller', 'AC97', '--audio', 'Null']
+
+    device.vm.provider :libvirt do |v|
+      v.nic_model_type = 'e1000' 
       v.memory = 512
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
@@ -559,17 +667,27 @@ end
 
     # NETWORK INTERFACES
       # link for eth0 --> oob-mgmt-switch:swp5
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net10", auto_config: false , :mac => "443839000012"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:12",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 9010 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 8010 + offset }",
+            :libvirt__iface_name => 'eth0',
+            auto_config: false
       # link for eth1 --> switch02:swp10
-      device.vm.network "private_network", virtualbox__intnet: "#{simid}_net4", auto_config: false , :mac => "443839000007"
-      
+      device.vm.network "private_network",
+            :mac => "44:38:39:00:00:07",
+            :libvirt__tunnel_type => 'udp',
+            :libvirt__tunnel_local_ip => '127.0.0.1',
+            :libvirt__tunnel_local_port => "#{ 8004 + offset }",
+            :libvirt__tunnel_ip => '127.0.0.1',
+            :libvirt__tunnel_port => "#{ 9004 + offset }",
+            :libvirt__iface_name => 'eth1',
+            auto_config: false
 
-    device.vm.provider "virtualbox" do |vbox|
-      vbox.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
-      vbox.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
-      vbox.customize ["modifyvm", :id, "--nictype1", "virtio"]
-    end
+
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
