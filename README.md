@@ -1,9 +1,5 @@
 ## cumulus-ansible-intermediate-vxlan-j2-2servers
 
-### Note
-
-TESTING CHANGES - WORK IN PROGRESS
-
 ### Summary:
 
   - Cumulus Linux 3.7.8
