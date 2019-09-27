@@ -200,7 +200,7 @@ end
   config.vm.define "oob-mgmt-switch" do |device|
 
     device.vm.hostname = "oob-mgmt-switch"
-
+    device.vm.box_version = "3.7.9"
     device.vm.box = "CumulusCommunity/cumulus-vx"
 
     device.vm.provider :libvirt do |v|
@@ -345,7 +345,7 @@ end
     device.vm.hostname = "switch01"
 
     device.vm.box = "CumulusCommunity/cumulus-vx"
-    device.vm.box_version = "3.7.8"
+    device.vm.box_version = "3.7.9"
 
     device.vm.provider :libvirt do |v|
       v.memory = 768
@@ -458,7 +458,7 @@ end
     device.vm.hostname = "switch02"
 
     device.vm.box = "CumulusCommunity/cumulus-vx"
-    device.vm.box_version = "3.7.8"
+    device.vm.box_version = "3.7.9"
 
     device.vm.provider :libvirt do |v|
       v.memory = 768
@@ -570,11 +570,11 @@ end
 
     device.vm.hostname = "server01"
 
-    device.vm.box = "generic/ubuntu1804"
+    device.vm.box = "generic/debian10"
 
     device.vm.provider :libvirt do |v|
       v.nic_model_type = 'e1000'
-      v.memory = 512
+      v.memory = 768
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
     device.vm.synced_folder ".", "/vagrant", disabled: true
@@ -607,9 +607,6 @@ end
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
-
-    # Shorten Boot Process - Applies to Ubuntu Only - remove \"Wait for Network\"
-    device.vm.provision :shell , inline: "sed -i 's/sleep [0-9]*/sleep 1/' /etc/init/failsafe.conf 2>/dev/null || true"
 
 
     # Run the Config specified in the Node Attributes
@@ -654,11 +651,11 @@ end
 
     device.vm.hostname = "server02"
 
-    device.vm.box = "generic/ubuntu1804"
+    device.vm.box = "generic/debian10"
 
     device.vm.provider :libvirt do |v|
       v.nic_model_type = 'e1000'
-      v.memory = 512
+      v.memory = 768
     end
     #   see note here: https://github.com/pradels/vagrant-libvirt#synced-folders
     device.vm.synced_folder ".", "/vagrant", disabled: true
@@ -691,9 +688,6 @@ end
 
     # Fixes "stdin: is not a tty" and "mesg: ttyname failed : Inappropriate ioctl for device"  messages --> https://github.com/mitchellh/vagrant/issues/1673
     device.vm.provision :shell , inline: "(sudo grep -q 'mesg n' /root/.profile 2>/dev/null && sudo sed -i '/mesg n/d' /root/.profile  2>/dev/null) || true;", privileged: false
-
-    # Shorten Boot Process - Applies to Ubuntu Only - remove \"Wait for Network\"
-    device.vm.provision :shell , inline: "sed -i 's/sleep [0-9]*/sleep 1/' /etc/init/failsafe.conf 2>/dev/null || true"
 
 
     # Run the Config specified in the Node Attributes

@@ -21,7 +21,7 @@ REPONAME="cumulus-ansible-intermediate-vxlan-j2-2servers"
 #Install Automation Tools
 puppet=0
 ansible=1
-ansible_version=2.8.4
+ansible_version=2.8.5
 
 #######################
 
