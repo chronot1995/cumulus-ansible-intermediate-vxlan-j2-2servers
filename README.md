@@ -1,5 +1,7 @@
 ## cumulus-ansible-intermediate-vxlan-j2-2servers
 
+### DEPRECATED - Please check out Nvidia Air at https://air.nvidia.com for up-to-date examples
+
 ### Summary:
 
   - Cumulus Linux 3.7.8
